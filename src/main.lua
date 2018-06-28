@@ -25,7 +25,7 @@ for index, value in pairs(a_priori) do
 end
 for index, package in pairs(packages.codes) do
     local codes = string_transformer.split_by_spaces(package)
-    print('Апостериорные вероятности в сообщении №' .. index .. ' (' .. letter_number .. '-й символ):')
+    print('Апостериорные вероятности для сообщения №' .. index .. ' (' .. letter_number .. '-й символ):')
     local a_posteriori = probability_calculator.calculate_a_posteriori(alphabet, probabilities, codes[letter_number], noise)
     for _, element in pairs(a_posteriori) do
         io.write(element .. ', ')
@@ -51,8 +51,40 @@ print()
 print('------- Вероятность символа зависит от частоты использования -------')
 print()
 --[[Априорные вероятности, вероятность символа зависит от частоты использования]]
-local sum_of_probabilities = 0
-for _, frequency_of_letter in pairs(frequency_of_letters) do
-    sum_of_probabilities = sum_of_probabilities + frequency_of_letter
+
+print('Априорные вероятности каждой буквы:')
+local a_priori = probability_calculator.calculate_a_priori_with_frequency_of_letters(alphabet, frequency_of_letters)
+for _, element in pairs(a_priori) do
+    io.write(element .. ', ')
 end
-print(sum_of_probabilities)
+print('')
+
+--[[Апостериорные вероятности, вероятность символа зависит от частоты использования]]
+local probabilities = {}
+for index, value in pairs(a_priori) do
+    probabilities[index] = value
+end
+for index, package in pairs(packages.codes) do
+    local codes = string_transformer.split_by_spaces(package)
+    print('Апостериорные вероятности для сообщения №' .. index .. ' (' .. letter_number .. '-й символ):')
+    local a_posteriori = probability_calculator.calculate_a_posteriori(alphabet, probabilities, codes[letter_number], noise)
+    for _, element in pairs(a_posteriori) do
+        io.write(element .. ', ')
+    end
+    print()
+    probabilities = a_posteriori
+end
+print()
+
+--[[Расшифровка сообщения, вероятность символа зависит от частоты использования]]
+local probabilities = {}
+for index, value in pairs(a_priori) do
+    probabilities[index] = value
+end
+print('Расшифрованное сообщение:')
+local caracters = decoder.decode(alphabet, probabilities, packages, noise)
+for _, char in pairs(caracters) do
+    io.write(char)
+end
+print()
+print()
