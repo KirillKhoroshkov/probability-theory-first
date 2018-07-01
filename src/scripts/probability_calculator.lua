@@ -67,4 +67,15 @@ function probability_calculator.calculate_realistic(alphabet_code, char_code, no
     return realistic;
 end
 
+---[[return number]]
+function probability_calculator.calculate_probability_of_receiving(char_code, noise, a_priori)
+    local pyj = 0
+    for alphabet_code, probability in pairs(a_priori) do
+        local realistic = probability_calculator.calculate_realistic(alphabet_code, char_code, noise)
+        pyj = pyj + realistic * probability
+    end
+    return pyj
+end
+
+
 return probability_calculator

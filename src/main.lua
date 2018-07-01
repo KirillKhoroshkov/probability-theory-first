@@ -4,6 +4,7 @@ local noise = require('src.data.noise')
 local letter_number = require('src.data.letter_number')
 local string_transformer = require('src.scripts.utils.string_transformer')
 local probability_calculator = require('src.scripts.probability_calculator')
+local entropy_calculator = require('src.scripts.entropy_calculator')
 local decoder = require('src.scripts.decoder')
 local frequency_of_letters = require('src.data.frequency_of_letters')
 
@@ -11,7 +12,7 @@ local frequency_of_letters = require('src.data.frequency_of_letters')
 --- Каждый вызов функции у functions можно спокойно закомментировать]]
 local functions = {}
 
-function functions.a_posteriori_probabilities(a_priori, letter_number, alphabet, packages, noise)
+function functions.calculate_a_posteriori(a_priori, letter_number, alphabet, packages, noise)
     local probabilities = {}
     for index, value in pairs(a_priori) do
         probabilities[index] = value
@@ -36,9 +37,11 @@ function functions.decode_message(a_priori, alphabet, packages, noise)
     end
     print('Расшифрованное сообщение для ' .. #packages.codes .. ' посылки:')
     local caracters = decoder.decode(alphabet, probabilities, packages, noise)
+    io.write('"')
     for _, char in pairs(caracters) do
         io.write(char)
     end
+    io.write('"')
     print()
 end
 
@@ -63,6 +66,19 @@ function functions.print_a_priory(a_priori)
     print()
 end
 
+function functions.calculate_entropy(a_priori, packages, alphabet, letter_number, noise)
+    local entropy = entropy_calculator.calculate_entropy(a_priori, packages, alphabet, letter_number, noise)
+    print('Энтропия для ' .. letter_number .. '-го символа:')
+    for _, value in pairs(entropy) do
+        io.write(value .. ', ')
+    end
+    print()
+    local mid_entropy = entropy_calculator.calculate_mid_entropy(entropy, packages, letter_number, noise, a_priori)
+    print('Средняя энтропия для ' .. letter_number .. '-го символа:')
+    print(mid_entropy)
+    print()
+end
+
 print()
 print('======= Последовательная передача одинаковых сообщений =======')
 
@@ -75,16 +91,16 @@ local a_priori = probability_calculator.calculate_a_priori(alphabet)
 --functions.print_a_priory(a_priori)
 
 --[[Апостериорные вероятности, символы равновероятны]]
---functions.a_posteriori_probabilities(a_priori, letter_number, alphabet, packages, noise)
+--functions.calculate_a_posteriori(a_priori, letter_number, alphabet, packages, noise)
 
 --[[Расшифровка сообщений, символы равновероятны]]
 --functions.decode_message_for_each_package(a_priori, alphabet, packages, noise)
 
 --[[Энтропия, символы равновероятны]]
---functions.entropy(a_priori, alphabet, packages, noise)
+--functions.calculate_entropy(a_priori, packages, alphabet, letter_number, noise)
 
 --[[Информация, символы равновероятны]]
---functions.information(a_priori, alphabet, packages, noise)
+--functions.calculate_information(a_priori, alphabet, packages, noise)
 
 print()
 print('------- Вероятность символа зависит от частоты использования -------')
@@ -95,16 +111,16 @@ local a_priori = probability_calculator.calculate_a_priori_with_frequency_of_let
 --functions.print_a_priory(a_priori)
 
 --[[Апостериорные вероятности, вероятность символа зависит от частоты использования]]
---functions.a_posteriori_probabilities(a_priori, letter_number, alphabet, packages, noise)
+--functions.calculate_a_posteriori(a_priori, letter_number, alphabet, packages, noise)
 
 --[[Расшифровка сообщений, вероятность символа зависит от частоты использования]]
 --functions.decode_message_for_each_package(a_priori, alphabet, packages, noise)
 
 --[[Энтропия, вероятность символа зависит от частоты использования]]
---functions.entropy(a_priori, alphabet, packages, noise)
+--functions.calculate_entropy(a_priori, packages, alphabet, letter_number, noise)
 
 --[[Информация, вероятность символа зависит от частоты использования]]
---functions.information(a_priori, alphabet, packages, noise)
+--functions.calculate_information(a_priori, alphabet, packages, noise)
 
 print()
 print('======= Передача сообщения путем многократного дублирования =======')
