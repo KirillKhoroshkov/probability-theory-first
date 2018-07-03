@@ -16,7 +16,8 @@ function decoder.decode(alphabet, a_priori, packages, noise)
             probabilities[index] = value
         end
         for _, codes in pairs(splitted_packages) do
-            local a_posteriori = probability_calculator.calculate_a_posteriori(alphabet, probabilities, codes[index], noise)
+            local a_posteriori =
+                probability_calculator.calculate_a_posteriori(alphabet, probabilities, codes[index], noise)
             probabilities = a_posteriori
         end
         local most_probable_code = decoder.find_most_probable(probabilities)
