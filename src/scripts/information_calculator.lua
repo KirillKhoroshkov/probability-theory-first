@@ -1,15 +1,13 @@
 local information_calculator = {}
 
 local probability_calculator = require('src.scripts.probability_calculator')
-local string_transformer = require('src.scripts.utils.string_transformer')
 local entropy_calculator = require('src.scripts.entropy_calculator')
 
-function information_calculator.calculate_information(a_priori, packages, alphabet, letter_number, noise)
+function information_calculator.calculate_information(a_priori, splitted_packages, alphabet, letter_number, noise)
     local information = {}
-    for index_of_package, package in pairs(packages.codes) do
-        local codes = string_transformer.split_by_spaces(package)
+    for index_of_package, package in pairs(splitted_packages) do
         local a_posteriori =
-            probability_calculator.calculate_a_posteriori(alphabet, a_priori, codes[letter_number], noise)
+            probability_calculator.calculate_a_posteriori(alphabet, a_priori, package[letter_number], noise)
         local entropy = entropy_calculator.calculate_entropy_for_one(a_posteriori)
         local sum = 0
         for index, a_posteriori_probability in pairs(a_posteriori) do
@@ -20,12 +18,11 @@ function information_calculator.calculate_information(a_priori, packages, alphab
     return information
 end
 
-function information_calculator.calculate_average_information(information, packages, letter_number, noise, a_priori)
+function information_calculator.calculate_average_information(information, splitted_packages, letter_number, noise, a_priori)
     local average_information = 0
-    for index, package in pairs(packages.codes) do
-        local splitted_package = string_transformer.split_by_spaces(package)
+    for index, package in pairs(splitted_packages) do
         local probability_of_receiving =
-        probability_calculator.calculate_probability_of_receiving(splitted_package[letter_number], noise, a_priori)
+            probability_calculator.calculate_probability_of_receiving(package[letter_number], noise, a_priori)
         average_information = average_information + probability_of_receiving * information[index]
     end
     return average_information

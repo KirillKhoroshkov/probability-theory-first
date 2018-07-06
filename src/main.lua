@@ -8,22 +8,28 @@ local entropy_calculator = require('src.scripts.entropy_calculator')
 local information_calculator = require('src.scripts.information_calculator')
 local decoder = require('src.scripts.decoder')
 local frequency_of_letters = require('src.data.frequency_of_letters')
-local calculator_of_arithmetic_means = require('src.scripts.utils.calculator_of_arithmetic_means')
 
 ---[[Чтобы можно было закомментировать ненужные функции.
 --- Каждый вызов функции у functions можно спокойно закомментировать]]
 local functions = {}
 
-function functions.calculate_a_posteriori_for_the_sequential_transmission(a_priori, letter_number, alphabet, packages, noise)
+function functions.calculate_a_posteriori(a_priori, letter_number, alphabet, packages, noise)
+    local splitted_packages = {}
+    for index, package in pairs(packages.codes) do
+        splitted_packages[index] = string_transformer.split_by_spaces(package)
+    end
+    functions.calculate_a_posteriori_from_splitted_packages(a_priori, letter_number, alphabet, splitted_packages, noise)
+end
+
+function functions.calculate_a_posteriori_from_splitted_packages(a_priori, letter_number, alphabet, splitted_packages, noise)
     local probabilities = {}
     for index, value in pairs(a_priori) do
         probabilities[index] = value
     end
-    for index, package in pairs(packages.codes) do
-        local codes = string_transformer.split_by_spaces(package)
+    for index, codes in pairs(splitted_packages) do
         print('Апостериорные вероятности для сообщения №' .. index .. ' (' .. letter_number .. '-й символ):')
         local a_posteriori =
-            probability_calculator.calculate_a_posteriori(alphabet, probabilities, codes[letter_number], noise)
+        probability_calculator.calculate_a_posteriori(alphabet, probabilities, codes[letter_number], noise)
         for _, element in pairs(a_posteriori) do
             io.write(element ^ (1 / 25) .. ', ')
         end
@@ -33,36 +39,17 @@ function functions.calculate_a_posteriori_for_the_sequential_transmission(a_prio
     print()
 end
 
-function functions.calculate_a_posteriori_when_duplicating(a_priori, letter_number, alphabet, packages, noise)
-    local probabilities = {}
+function functions.decode_message(a_priori, alphabet, packages, noise)
+    local splitted_packages = {}
     for index, package in pairs(packages.codes) do
-        local codes = string_transformer.split_by_spaces(package)
-        local a_posteriori =
-            probability_calculator.calculate_a_posteriori(alphabet, a_priori, codes[letter_number], noise)
-        probabilities[index] = a_posteriori
+        splitted_packages[index] = string_transformer.split_by_spaces(package)
     end
-    local average_probabilities = calculator_of_arithmetic_means.find_the_average_values(probabilities)
-    print('Апостериорные вероятности для посылки с многократным дублированием (' .. letter_number .. '-й символ):')
-    for _, element in pairs(average_probabilities) do
-        io.write(element ^ (1 / 25) .. ', ')
-    end
-    print()
+    functions.decode_message_from_splitted_packages(a_priori, alphabet, splitted_packages, packages.number_of_characters, noise)
 end
 
-function functions.decode_message_for_the_sequential_transmission(a_priori, alphabet, packages, noise)
-    print('Расшифрованное сообщение для ' .. #packages.codes .. ' посылки:')
-    local caracters = decoder.decode_for_the_sequential_transmission(alphabet, a_priori, packages, noise)
-    io.write('"')
-    for _, char in pairs(caracters) do
-        io.write(char)
-    end
-    io.write('"')
-    print()
-end
-
-function functions.decode_message_when_duplicating(a_priori, alphabet, packages, noise)
-    print('Расшифрованное сообщение для посылки с многократным дублированием:')
-    local caracters = decoder.decode_when_duplicating(alphabet, a_priori, packages, noise)
+function functions.decode_message_from_splitted_packages(a_priori, alphabet, splitted_packages, number_of_characters, noise)
+    print('Расшифрованное сообщение для ' .. #splitted_packages .. ' посылки:')
+    local caracters = decoder.decode(alphabet, a_priori, splitted_packages, number_of_characters, noise)
     io.write('"')
     for _, char in pairs(caracters) do
         io.write(char)
@@ -79,8 +66,9 @@ function functions.decode_message_for_each_package(a_priori, alphabet, packages,
         for i = 1, index do
             pac.codes[i] = packages.codes[i]
         end
-        functions.decode_message_for_the_sequential_transmission(a_priori, alphabet, pac, noise)
+        functions.decode_message(a_priori, alphabet, pac, noise)
     end
+    print()
 end
 
 function functions.print_a_priory(a_priori)
@@ -92,116 +80,157 @@ function functions.print_a_priory(a_priori)
     print()
 end
 
-function functions.calculate_entropy_for_the_sequential_transmission(a_priori, packages, alphabet, letter_number, noise)
-    local entropy = entropy_calculator.calculate_entropy(a_priori, packages, alphabet, letter_number, noise)
+function functions.calculate_entropy(a_priori, packages, alphabet, letter_number, noise)
+    local splitted_packages = {}
+    for index, package in pairs(packages.codes) do
+        splitted_packages[index] = string_transformer.split_by_spaces(package)
+    end
+    functions.calculate_entropy_from_splitted_packages(a_priori, splitted_packages, alphabet, letter_number, noise)
+end
+
+function functions.calculate_entropy_from_splitted_packages(a_priori, splitted_packages, alphabet, letter_number, noise)
+    local entropy = entropy_calculator.calculate_entropy(a_priori, splitted_packages, alphabet, letter_number, noise)
     print('Энтропия для ' .. letter_number .. '-го символа:')
     for _, value in pairs(entropy) do
         io.write(value .. ', ')
     end
     print()
     local average_entropy =
-        entropy_calculator.calculate_average_entropy(entropy, packages, letter_number, noise, a_priori)
+        entropy_calculator.calculate_average_entropy(entropy, splitted_packages, letter_number, noise, a_priori)
     print('Средняя условная энтропия для ' .. letter_number .. '-го символа:')
     print(average_entropy)
     print()
 end
 
-function functions.calculate_information_for_the_sequential_transmission(a_priori, packages, alphabet, letter_number, noise)
-    local information = information_calculator.calculate_information(a_priori, packages, alphabet, letter_number, noise)
+function functions.calculate_information(a_priori, packages, alphabet, letter_number, noise)
+    local splitted_packages = {}
+    for index, package in pairs(packages.codes) do
+        splitted_packages[index] = string_transformer.split_by_spaces(package)
+    end
+    functions.calculate_information_from_splitted_packages(a_priori, splitted_packages, alphabet, letter_number, noise)
+end
+
+function functions.calculate_information_from_splitted_packages(a_priori, splitted_packages, alphabet, letter_number, noise)
+    local information = information_calculator.calculate_information(a_priori, splitted_packages, alphabet, letter_number, noise)
     print('Информация для ' .. letter_number .. '-го символа:')
     for _, value in pairs(information) do
         io.write(value .. ', ')
     end
     print()
     local average_information =
-        information_calculator.calculate_average_information(information, packages, letter_number, noise, a_priori)
+        information_calculator.calculate_average_information(information, splitted_packages, letter_number, noise, a_priori)
     print('Средняя взаимная информация для ' .. letter_number .. '-го символа:')
     print(average_information)
     print()
 end
 
 print()
-print('======= Последовательная передача одинаковых сообщений =======')
-
-print()
-print('------- Символы равновероятны -------')
+print('1.1 Расшифрование сообщения при равных априорных вероятностях')
 print()
 
 ---[[Априорные вероятности, символы равновероятны]]
 local a_priori = probability_calculator.calculate_a_priori(alphabet)
---functions.print_a_priory(a_priori)
+functions.print_a_priory(a_priori)
 
 ---[[Апостериорные вероятности, символы равновероятны]]
---functions.calculate_a_posteriori_for_the_sequential_transmission(a_priori, letter_numbers.for_probabilities, alphabet, packages, noise)
+functions.calculate_a_posteriori(a_priori, letter_numbers.for_probabilities, alphabet, packages, noise)
 
 ---[[Расшифровка сообщений, символы равновероятны]]
---functions.decode_message_for_each_package(a_priori, alphabet, packages, noise)
+functions.decode_message_for_each_package(a_priori, alphabet, packages, noise)
 
 ---[[Энтропия, символы равновероятны]]
---functions.calculate_entropy_for_the_sequential_transmission(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_entropy(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
 
 ---[[Информация, символы равновероятны]]
---functions.calculate_information_for_the_sequential_transmission(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_information(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
 
 print()
-print('------- Вероятность символа зависит от частоты использования -------')
+print('1.2 Расшифрование сообщения с учётом частоты использования русских букв')
 print()
 
 ---[[Априорные вероятности, вероятность символа зависит от частоты использования]]
 local a_priori = probability_calculator.calculate_a_priori_with_frequency_of_letters(alphabet, frequency_of_letters)
---functions.print_a_priory(a_priori)
+functions.print_a_priory(a_priori)
 
 ---[[Апостериорные вероятности, вероятность символа зависит от частоты использования]]
---functions.calculate_a_posteriori_for_the_sequential_transmission(a_priori, letter_number.for_probabilities, alphabet, packages, noise)
+functions.calculate_a_posteriori(a_priori, letter_numbers.for_probabilities, alphabet, packages, noise)
 
 ---[[Расшифровка сообщений, вероятность символа зависит от частоты использования]]
---functions.decode_message_for_each_package(a_priori, alphabet, packages, noise)
+functions.decode_message_for_each_package(a_priori, alphabet, packages, noise)
 
 ---[[Энтропия, вероятность символа зависит от частоты использования]]
---functions.calculate_entropy_for_the_sequential_transmission(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_entropy(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
 
 ---[[Информация, вероятность символа зависит от частоты использования]]
---functions.calculate_information_for_the_sequential_transmission(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_information(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+
+---Передача сообщения путем многократного дублирования
+
+local alphabet_with_duplication = {}
+alphabet_with_duplication.codes = {}
+local package_with_duplication = {}
+local number_of_packages = 0
+for index, package in pairs(packages.codes) do
+    number_of_packages = index
+    local splitted_package = string_transformer.split_by_spaces(package)
+    for i, code in pairs(splitted_package) do
+        if package_with_duplication[i] == nil then
+            package_with_duplication[i] = code
+        else
+            package_with_duplication[i] = package_with_duplication[i] .. code
+        end
+    end
+end
+for code, character in pairs(alphabet.codes) do
+    local code_with_duplication = ''
+    for _ = 1, number_of_packages do
+        code_with_duplication = code_with_duplication .. code
+    end
+    alphabet_with_duplication.codes[code_with_duplication] = character
+end
+alphabet_with_duplication.depth = alphabet.depth * number_of_packages
+local list_with_package_with_duplication = {}
+list_with_package_with_duplication[1] = package_with_duplication
+local number_of_characters = packages.number_of_characters
 
 print()
-print('======= Передача сообщения путем многократного дублирования =======')
-
-print()
-print('------- Символы равновероятны -------')
+print('2.1 Расшифрование одного длинного сообщения при равных априорных вероятностях')
 print()
 
 ---[[Априорные вероятности, символы равновероятны]]
-local a_priori = probability_calculator.calculate_a_priori(alphabet)
---functions.print_a_priory(a_priori)
+local a_priori = probability_calculator.calculate_a_priori(alphabet_with_duplication)
+functions.print_a_priory(a_priori)
 
 ---[[Апостериорные вероятности, символы равновероятны]]
---functions.calculate_a_posteriori_when_duplicating(a_priori, letter_numbers.for_probabilities, alphabet, packages, noise)
+functions.calculate_a_posteriori_from_splitted_packages(a_priori, letter_numbers.for_probabilities, alphabet_with_duplication, list_with_package_with_duplication, noise)
 
 ---[[Расшифровка сообщений, символы равновероятны]]
---functions.decode_message_when_duplicating(a_priori, alphabet, packages, noise)
+functions.decode_message_from_splitted_packages(a_priori, alphabet_with_duplication, list_with_package_with_duplication, number_of_characters, noise)
+print()
 
 ---[[Энтропия, символы равновероятны]]
---functions.calculate_entropy_when_duplicating(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_entropy_from_splitted_packages(a_priori, list_with_package_with_duplication, alphabet_with_duplication, letter_numbers.for_entropy_and_information, noise)
 
 ---[[Информация, символы равновероятны]]
---functions.calculate_information_when_duplicating(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_information_from_splitted_packages(a_priori, list_with_package_with_duplication, alphabet_with_duplication, letter_numbers.for_entropy_and_information, noise)
 
 print()
-print('------- Вероятность символа зависит от частоты использования -------')
+print('2.2 Расшифрование одного длинного сообщения с учётом частоты использования русских букв')
 print()
 
 ---[[Априорные вероятности, вероятность символа зависит от частоты использования]]
-local a_priori = probability_calculator.calculate_a_priori_with_frequency_of_letters(alphabet, frequency_of_letters)
---functions.print_a_priory(a_priori)
+local a_priori = probability_calculator.calculate_a_priori_with_frequency_of_letters(alphabet_with_duplication, frequency_of_letters)
+functions.print_a_priory(a_priori)
 
 ---[[Апостериорные вероятности, вероятность символа зависит от частоты использования]]
---functions.calculate_a_posteriori_when_duplicating(a_priori, letter_numbers.for_probabilities, alphabet, packages, noise)
+functions.calculate_a_posteriori_from_splitted_packages(a_priori, letter_numbers.for_probabilities, alphabet_with_duplication, list_with_package_with_duplication, noise)
 
 ---[[Расшифровка сообщений, вероятность символа зависит от частоты использования]]
---functions.decode_message_when_duplicating(a_priori, alphabet, packages, noise)
+functions.decode_message_from_splitted_packages(a_priori, alphabet_with_duplication, list_with_package_with_duplication, number_of_characters, noise)
+print()
 
 ---[[Энтропия, вероятность символа зависит от частоты использования]]
---functions.calculate_entropy_when_duplicating(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_entropy_from_splitted_packages(a_priori, list_with_package_with_duplication, alphabet_with_duplication, letter_numbers.for_entropy_and_information, noise)
 
 ---[[Информация, вероятность символа зависит от частоты использования]]
---functions.calculate_information_when_duplicating(a_priori, packages, alphabet, letter_numbers.for_entropy_and_information, noise)
+functions.calculate_information_from_splitted_packages(a_priori, list_with_package_with_duplication, alphabet_with_duplication, letter_numbers.for_entropy_and_information, noise)
