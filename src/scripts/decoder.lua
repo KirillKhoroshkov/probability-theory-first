@@ -1,7 +1,6 @@
 local decoder = {}
 
 local probability_calculator = require('src.scripts.probability_calculator')
-local calculator_of_arithmetic_means = require('src.scripts.utils.calculator_of_arithmetic_means')
 
 ---[[return array of chars]]
 function decoder.decode(alphabet, a_priori, splitted_packages, number_of_characters, noise)
