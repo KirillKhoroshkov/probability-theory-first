@@ -34,7 +34,7 @@ function functions.calculate_a_posteriori_for_splitted_packages(a_priori, letter
         for code, element in pairs(a_posteriori) do
             modified_a_posteriori[code] = element ^ (1 / 25)
         end
-        functions.print_table_with_alphabet_for_wolfram(modified_a_posteriori, current_alphabet)
+        functions.print_table_with_alphabet_for_python(modified_a_posteriori, current_alphabet)
         print()
         probabilities = a_posteriori
     end
@@ -79,7 +79,7 @@ function functions.print_a_priory(a_priori, current_alphabet)
     for index, element in pairs(a_priori) do
         modified_a_priori[index] = element ^ (1 / 25)
     end
-    functions.print_table_with_alphabet_for_wolfram(modified_a_priori, current_alphabet)
+    functions.print_table_with_alphabet_for_python(modified_a_priori, current_alphabet)
     print()
     print()
 end
@@ -95,7 +95,7 @@ end
 function functions.calculate_entropy_for_splitted_packages(a_priori, splitted_packages, alphabet, letter_number, noise)
     local entropy = entropy_calculator.calculate_entropy(a_priori, splitted_packages, alphabet, letter_number, noise)
     print('Энтропия для ' .. letter_number .. '-го символа:')
-    functions.print_table_for_wolfram(entropy)
+    functions.print_table_for_python(entropy)
     print()
     local average_entropy =
         entropy_calculator.calculate_average_entropy(entropy, splitted_packages, letter_number, noise, a_priori)
@@ -115,7 +115,7 @@ end
 function functions.calculate_information_for_splitted_packages(a_priori, splitted_packages, alphabet, letter_number, noise)
     local information = information_calculator.calculate_information(a_priori, splitted_packages, alphabet, letter_number, noise)
     print('Информация для ' .. letter_number .. '-го символа:')
-    functions.print_table_for_wolfram(information)
+    functions.print_table_for_python(information)
     print()
     local average_information =
         information_calculator.calculate_average_information(information, splitted_packages, letter_number, noise, a_priori)
@@ -124,26 +124,44 @@ function functions.calculate_information_for_splitted_packages(a_priori, splitte
     print()
 end
 
-function functions.print_table_for_wolfram(table)
-    io.write('barchart[{')
+function functions.print_table_for_python(table)
+    io.write('values = [')
     local chart_labels = ''
+    local is_first = true
     for index, value in pairs(table) do
-        io.write(value .. ', ')
-        chart_labels = chart_labels .. '"' .. index .. '", '
+        if is_first then
+            is_first = false
+            chart_labels = chart_labels .. '"' .. index .. '"'
+        else
+            io.write(', ')
+            chart_labels = chart_labels .. ', "' .. index .. '"'
+        end
+        io.write(value)
     end
-    io.write('}, chartlabels = {' .. chart_labels .. '}]')
+    io.write(']')
+    print()
+    io.write('names = [' .. chart_labels .. ']')
 end
 
-function functions.print_table_with_alphabet_for_wolfram(table, current_alphabet)
-    io.write('barchart[{')
+function functions.print_table_with_alphabet_for_python(table, current_alphabet)
+    io.write('values = [')
     local chart_labels = ""
+    local is_first = true
     for _, code in pairs(current_alphabet.character_order) do
         local character = current_alphabet.codes[code]
         local value = table[code]
-        io.write(value .. ', ')
-        chart_labels = chart_labels .. '"' .. character .. '", '
+        if is_first then
+            is_first = false
+            chart_labels = chart_labels .. '"' .. character .. '"'
+        else
+            io.write(', ')
+            chart_labels = chart_labels .. ', "' .. character .. '"'
+        end
+        io.write(value)
     end
-    io.write('}, chartlabels = {' .. chart_labels .. '}]')
+    io.write(']')
+    print()
+    io.write('names = [' .. chart_labels .. ']')
 end
 
 print()
